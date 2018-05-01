@@ -1,5 +1,3 @@
-import logging
-
 from ignite.engines import Engine
 
 
@@ -26,7 +24,7 @@ class EarlyStopping(object):
     evaluator.add_event_handler(Events.COMPLETED, handler)
     ```
     """
-    def __init__(self, patience, score_function, trainer):
+    def __init__(self, patience, score_function, trainer, logger):
         assert callable(score_function), "Argument score_function should be a function"
         assert patience > 0, "Argument patience should be positive"
         assert isinstance(trainer, Engine), "Argument trainer should be an instance of Engine"
@@ -35,8 +33,7 @@ class EarlyStopping(object):
         self.trainer = trainer
         self.counter = 0
         self.best_score = None
-        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
-        self._logger.addHandler(logging.NullHandler())
+        self._logger = logger
 
     def __call__(self, engine):
         score = self.score_function(engine)
