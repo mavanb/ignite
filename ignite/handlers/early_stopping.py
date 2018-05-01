@@ -42,9 +42,9 @@ class EarlyStopping(object):
             self.best_score = score
         elif score < self.best_score:
             self.counter += 1
-            self._logger.debug("EarlyStopping: %i / %i" % (self.counter, self.patience))
+            self._logger("EarlyStopping: %i / %i" % (self.counter, self.patience))
             if self.counter >= self.patience:
-                self._logger.info("EarlyStopping: Stop training")
+                self._logger("EarlyStopping: Stop training")
                 self.trainer.terminate()
         else:
             self.best_score = score
