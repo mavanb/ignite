@@ -132,7 +132,7 @@ class Engine(object):
             self._logger.info("Training starting with max_epochs={}".format(max_epochs))
             start_time = time.time()
             self._fire_event(Events.STARTED)
-            while self.state.epoch < max_epochs and not self.should_terminate:
+            while self.state.epoch < self.state.max_epochs and not self.should_terminate:
                 self.state.epoch += 1
                 self._fire_event(Events.EPOCH_STARTED)
                 hours, mins, secs = self._run_once_on_dataset()
