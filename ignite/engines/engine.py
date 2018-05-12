@@ -34,11 +34,12 @@ class Engine(object):
             in each iteration, outputing data to be stored in the state
 
     """
-    def __init__(self, process_function):
+    def __init__(self, process_function, trainer=None):
         self._event_handlers = {}
         self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
         self._logger.addHandler(logging.NullHandler())
         self._process_function = process_function
+        self._trainer = trainer
         self.should_terminate = False
         self.state = None
 
@@ -88,7 +89,7 @@ class Engine(object):
     def terminate(self):
         """Sends terminate signal to the engine, so that it terminates after the current iteration
         """
-        self._logger.info("Terminate signaled. Engine will stop after current iteration is finished")
+        self._logger.debug("Terminate signaled. Engine will stop after current iteration is finished")
         self.should_terminate = True
 
     def _run_once_on_dataset(self):
@@ -98,7 +99,7 @@ class Engine(object):
                 self.state.batch = batch
                 self.state.iteration += 1
                 self._fire_event(Events.ITERATION_STARTED)
-                self.state.output = self._process_function(self, batch)
+                self.state.output = self._process_function(self, self._trainer, batch)
                 self._fire_event(Events.ITERATION_COMPLETED)
                 if self.should_terminate:
                     break
@@ -129,14 +130,14 @@ class Engine(object):
         self.state = State(dataloader=data, epoch=0, max_epochs=max_epochs, metrics={})
 
         try:
-            self._logger.info("Training starting with max_epochs={}".format(max_epochs))
+            self._logger.debug("Training starting with max_epochs={}".format(max_epochs))
             start_time = time.time()
             self._fire_event(Events.STARTED)
             while self.state.epoch < self.state.max_epochs and not self.should_terminate:
                 self.state.epoch += 1
                 self._fire_event(Events.EPOCH_STARTED)
                 hours, mins, secs = self._run_once_on_dataset()
-                self._logger.info("Epoch[%s] Complete. Time taken: %02d:%02d:%02d", self.state.epoch, hours, mins, secs)
+                self._logger.debug("Epoch[%s] Complete. Time taken: %02d:%02d:%02d", self.state.epoch, hours, mins, secs)
                 if self.should_terminate:
                     break
                 self._fire_event(Events.EPOCH_COMPLETED)
@@ -144,7 +145,7 @@ class Engine(object):
             self._fire_event(Events.COMPLETED)
             time_taken = time.time() - start_time
             hours, mins, secs = _to_hours_mins_secs(time_taken)
-            self._logger.info("Training complete. Time taken %02d:%02d:%02d" % (hours, mins, secs))
+            self._logger.debug("Training complete. Time taken %02d:%02d:%02d" % (hours, mins, secs))
 
         except BaseException as e:
             self._logger.error("Training is terminating due to exception: %s", str(e))
