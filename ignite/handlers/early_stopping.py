@@ -1,5 +1,5 @@
+import logging
 from ignite.engines import Engine
-
 
 class EarlyStopping(object):
     """EarlyStopping handler can be used to stop the training if no improvement after a given number of events
@@ -24,7 +24,7 @@ class EarlyStopping(object):
     evaluator.add_event_handler(Events.COMPLETED, handler)
     ```
     """
-    def __init__(self, patience, score_function, trainer, logger):
+    def __init__(self, patience, score_function, trainer):
         assert callable(score_function), "Argument score_function should be a function"
         assert patience > 0, "Argument patience should be positive"
         assert isinstance(trainer, Engine), "Argument trainer should be an instance of Engine"
@@ -33,7 +33,8 @@ class EarlyStopping(object):
         self.trainer = trainer
         self.counter = 0
         self.best_score = None
-        self._logger = logger
+        self._logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
+        self._logger.addHandler(logging.NullHandler())
 
     def __call__(self, engine):
         score = self.score_function(engine)
@@ -42,9 +43,9 @@ class EarlyStopping(object):
             self.best_score = score
         elif score < self.best_score:
             self.counter += 1
-            self._logger("EarlyStopping: %i / %i" % (self.counter, self.patience))
+            self._logger.info("EarlyStopping: %i / %i" % (self.counter, self.patience))
             if self.counter >= self.patience:
-                self._logger("EarlyStopping: Stop training")
+                self._logger.info("EarlyStopping: Stop training")
                 self.trainer.terminate()
         else:
             self.best_score = score
